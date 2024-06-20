@@ -6,9 +6,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
-
-	"github.com/gorilla/websocket"
 )
 
 // PlayerStore stores score information about players.
@@ -29,6 +28,7 @@ type PlayerServer struct {
 	store PlayerStore
 	http.Handler
 	template *template.Template
+	game Game
 }
 
 const ( 
@@ -36,10 +36,9 @@ const (
  	htmlTemplatePath = "game.html"
 )
 
-var wsUpgrader = websocket.Upgrader{}
 
 // NewPlayerServer creates a PlayerServer with routing configured.
-func NewPlayerServer(store PlayerStore) (*PlayerServer, error) {
+func NewPlayerServer(store PlayerStore, game Game) (*PlayerServer, error) {
 	p := new(PlayerServer)
 
 	tmpl, err := template.ParseFiles("game.html")
@@ -57,6 +56,7 @@ func NewPlayerServer(store PlayerStore) (*PlayerServer, error) {
 	router.Handle("/ws", http.HandlerFunc(p.websocketHandler))
 
 	p.Handler = router
+	p.game = game
 
 	return p, nil
 }
@@ -71,10 +71,14 @@ func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *PlayerServer) websocketHandler(w http.ResponseWriter, r *http.Request) {
-	conn, _ := wsUpgrader.Upgrade(w, r, nil)
-	_, winnerMsg, _ := conn.ReadMessage()
-	log.Printf("msg: %v", string(winnerMsg))
-	p.store.RecordWin(string(winnerMsg))
+	ws := newPlayerServerWS(w, r)
+
+	numberOfPlayersMsg := ws.WaitForMsg()
+	numberOfPlayers, _ := strconv.Atoi(numberOfPlayersMsg)
+	p.game.Start(numberOfPlayers, ws) //todo: Don't discard the blinds messages!
+
+	winner := ws.WaitForMsg()
+	p.game.Finish(winner)
 }
 
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {

@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"io"
 	"testing"
 	"time"
 )
@@ -16,6 +17,7 @@ type StubPlayerStore struct {
 type ScheduledAlert struct {
 	At     time.Duration
 	Amount int
+	To io.Writer
 }
 
 
@@ -25,7 +27,7 @@ type GameSpy struct {
 	StartCalled bool
 }
 
-func (g *GameSpy) Start(numberOfPlayers int) {
+func (g *GameSpy) Start(numberOfPlayers int, to io.Writer) {
 	g.StartedWith = numberOfPlayers
 	g.StartCalled = true
 }
@@ -44,8 +46,8 @@ type SpyBlindAlerter struct {
 }
 
 // ScheduleAlertAt records alerts that have been scheduled.
-func (s *SpyBlindAlerter) ScheduleAlertAt(at time.Duration, amount int) {
-	s.Alerts = append(s.Alerts, ScheduledAlert{at, amount})
+func (s *SpyBlindAlerter) ScheduleAlertAt(at time.Duration, amount int, to io.Writer) {
+	s.Alerts = append(s.Alerts, ScheduledAlert{at, amount, to})
 }
 
 // GetPlayerScore returns a score from Scores.

@@ -22,8 +22,9 @@ func main() {
 
 	log.Printf("Server is starting on port %s\n", ":5000")
 
+	newGame := game.NewTexasHoldem(game.BlindAlerterFunc(game.Alerter), store)
 
-	server, _ := game.NewPlayerServer(store)
+	server, _ := game.NewPlayerServer(store, newGame)
 
 	if err := http.ListenAndServe(":5000", game.LoggingMiddleware(server)); err != nil {
 		log.Fatalf("could not listen on port 5000 %v", err)

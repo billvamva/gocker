@@ -9,10 +9,13 @@ import (
 )
 
 
-var dummyBlindAlerter = &SpyBlindAlerter{}
-var dummyPlayerStore = &StubPlayerStore{}
-var dummyStdIn = &bytes.Buffer{}
-var dummyStdOut = &bytes.Buffer{}
+var (
+	dummyBlindAlerter = &SpyBlindAlerter{}
+ 	dummyPlayerStore = &StubPlayerStore{}
+ 	dummyStdIn = &bytes.Buffer{}
+ 	dummyStdOut = &bytes.Buffer{}
+	dummyGame = &GameSpy{} 
+)
 const BadPlayerInputErrMsg = "Bad value received for number of players, please try again with a number"
 
 
@@ -76,7 +79,7 @@ func TestGame_Start(t *testing.T) {
 		blindAlerter := &SpyBlindAlerter{}
 		game := NewTexasHoldem(blindAlerter, dummyPlayerStore)
 
-		game.Start(5)
+		game.Start(5, dummyStdOut)
 
 		cases := []ScheduledAlert{
 			{At: 0 * time.Second, Amount: 100},
@@ -99,7 +102,8 @@ func TestGame_Start(t *testing.T) {
 		blindAlerter := &SpyBlindAlerter{}
 		game := NewTexasHoldem(blindAlerter, dummyPlayerStore)
 
-		game.Start(7)
+		game.Start(7, dummyStdOut)
+
 
 		cases := []ScheduledAlert{
 			{At: 0 * time.Second, Amount: 100},
